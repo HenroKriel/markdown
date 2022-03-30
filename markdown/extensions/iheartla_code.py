@@ -838,7 +838,7 @@ class IheartlaBlockPreprocessor(Preprocessor):
                     used_list_str = '"' + '","'.join(sym_eq_data.used_list) + '"'
                 cur_desc = sym_eq_data.desc
                 if sym_eq_data.desc:
-                    cur_desc = cur_desc.replace('\\', '\\\\\\\\').replace('"', '\\"').replace("'", "\\'")
+                    cur_desc = cur_desc.replace('\\', '\\\\\\\\').replace('"', '\\\\"').replace("'", "\\\\'")
                 if not cur_desc:
                     la_warning("missing description for sym {}".format(sym))
                 # print(" sym_eq_data.desc:{}".format( sym_eq_data.desc))
