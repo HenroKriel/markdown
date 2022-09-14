@@ -14,9 +14,9 @@ if WHEEL_MODE:
     from linear_algebra.iheartla.la_parser.parser import compile_la_content, ParserTypeEnum
     from linear_algebra.iheartla.la_tools.la_helper import DEBUG_MODE, read_from_file, save_to_file, la_warning, la_debug, get_file_base, record
 else:
-    from iheartla.la_parser.parser import compile_la_content, ParserTypeEnum
-    from iheartla.la_tools.la_helper import *
-    from iheartla.la_tools.la_msg import *
+    from iheartla.iheartla.la_parser.parser import compile_la_content, ParserTypeEnum
+    from iheartla.iheartla.la_tools.la_helper import *
+    from iheartla.iheartla.la_tools.la_msg import *
 
 cached_data = {}
 

@@ -7,12 +7,11 @@ if WHEEL_MODE:
     from linear_algebra.markdown.inlinepatterns import Pattern
     from linear_algebra.markdown.util import etree
 else:
-    from markdown.extensions import Extension
-    from markdown.preprocessors import Preprocessor
-    from markdown.treeprocessors import Treeprocessor
-    from markdown.postprocessors import Postprocessor
-    from markdown.inlinepatterns import Pattern
-    from markdown.util import etree
+    from ..preprocessors import Preprocessor
+    from ..treeprocessors import Treeprocessor
+    from ..postprocessors import Postprocessor
+    from ..inlinepatterns import Pattern
+    from ..util import etree
 
 from pybtex.database.input import bibtex
 

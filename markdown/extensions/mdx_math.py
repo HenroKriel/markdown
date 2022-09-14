@@ -18,10 +18,10 @@ if WHEEL_MODE:
     from linear_algebra.markdown.preprocessors import Preprocessor
     from linear_algebra.markdown.util import AtomicString
 else:
-    from markdown.inlinepatterns import InlineProcessor, Pattern
-    from markdown.extensions import Extension
-    from markdown.preprocessors import Preprocessor
-    from markdown.util import AtomicString
+    from ..inlinepatterns import InlineProcessor, Pattern
+    from ..extensions import Extension
+    from ..preprocessors import Preprocessor
+    from ..util import AtomicString
 import cgi
 
 

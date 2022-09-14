@@ -37,8 +37,7 @@ if WHEEL_MODE:
     from linear_algebra.markdown.treeprocessors import Treeprocessor, isString
     from linear_algebra.markdown.extensions import Extension
 else:
-    from markdown.treeprocessors import Treeprocessor, isString
-    from markdown.extensions import Extension
+    from ..treeprocessors import Treeprocessor, isString
 
 
 ATTR_RE = re.compile(r'\{@([^\}]*)=([^\}]*)}')  # {@id=123}
