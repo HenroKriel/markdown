@@ -818,6 +818,8 @@ class IheartlaBlockPreprocessor(Preprocessor):
             self.save_python(code_frame_list)
         elif parser_type == ParserTypeEnum.MATLAB:
             self.save_matlab(code_frame_list)
+        elif parser_type == ParserTypeEnum.GLSL:
+            self.save_glsl(code_frame_list)
 
     def save_cpp(self, code_frame_list):
         lib_header = None
@@ -849,6 +851,15 @@ class IheartlaBlockPreprocessor(Preprocessor):
             self.md.lib_matlab = lib_content
             # save_to_file(lib_content, "{}/lib.m".format(self.md.path))
 
+    def save_glsl(self, code_frame_list):
+        lib_header = None
+        lib_content = ''
+        for code_frame in code_frame_list:
+            if lib_header is None:
+                lib_header = code_frame.include
+            lib_content += code_frame.struct + '\n'
+        if lib_header is not None:
+            self.md.lib_glsl = lib_header + lib_content
 
 
     def _escape(self, txt):
