@@ -101,6 +101,17 @@ class IheartlaBlockPreprocessor(Preprocessor):
             '''),
         re.MULTILINE | re.DOTALL | re.VERBOSE
     )
+    # ``` scene
+    SCENE_RE = re.compile(
+        dedent(r'''
+                (?P<fence>^(?:~{3,}|`{3,}))[ ]*                          # opening fence
+                scene\s* 
+                \n                                                       # newline (end of opening fence)
+                (?P<code>.*?)(?<=\n)                                     # the code block
+                (?P=fence)[ ]*$                                          # closing fence
+            '''),
+        re.MULTILINE | re.DOTALL | re.VERBOSE
+    )
     # Match string: <figure>***</figure>
     FIGURE_BLOCK_RE = re.compile(
         dedent(r'''<figure>(?P<figure>.*?)</figure>'''),
@@ -526,6 +537,33 @@ class IheartlaBlockPreprocessor(Preprocessor):
                 text_list[index] = "<div>❤:{}</div>".format(context_list[index]) + text_list[index]
         return ''.join(text_list)
 
+    def handle_scene(self, text, equation_dict):
+        m = self.SCENE_RE.search(text)
+        if m != None:
+            scene_desc = m.group('code')
+            import json
+            scene_json = json.loads(scene_desc)
+            shape = scene_json['shape']
+
+            if not shape in equation_dict:
+                raise Exception('Shape not defined')               
+            if not equation_dict[shape].shape:
+                raise Exception(f'{shape} is not a shape')               
+
+            file = open("./markdown/markdown/extensions/scene/scene.html")
+            scene_html = file.read()
+            file.close()
+
+            file = open("./markdown/markdown/extensions/scene/scene.glsl")
+            scene_glsl = file.read()
+            file.close()
+
+            scene_html = scene_html.replace("//INCLUDE LIB", self.md.lib_glsl)
+            scene_glsl = scene_glsl.replace("SHAPE", shape)
+            scene_html = scene_html.replace("//INCLUDE SCENE", scene_glsl)
+
+            self.md.scene = scene_html
+
     def handle_figure(self, text):
         start_index = 0
         text_list = []
@@ -747,6 +785,7 @@ class IheartlaBlockPreprocessor(Preprocessor):
         equation_dict = self.merge_desc(equation_dict, span_dict)
         self.process_metadata(equation_dict, context_list)
         text = self.handle_context_post(text, equation_dict)
+        self.handle_scene(text, equation_dict)
         # print(text)
         # for k, v in replace_dict.items():
         #     text = text.replace(k, v)
