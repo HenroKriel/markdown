@@ -540,6 +540,8 @@ class IheartlaBlockPreprocessor(Preprocessor):
     def handle_scene(self, text, equation_dict):
         m = self.SCENE_RE.search(text)
         if m != None:
+            text = self.SCENE_RE.sub('', text)
+            
             scene_desc = m.group('code')
             import json
             scene_json = json.loads(scene_desc)
@@ -563,6 +565,7 @@ class IheartlaBlockPreprocessor(Preprocessor):
             scene_html = scene_html.replace("//INCLUDE SCENE", scene_glsl)
 
             self.md.scene = scene_html
+        return text
 
     def handle_figure(self, text):
         start_index = 0
@@ -785,7 +788,7 @@ class IheartlaBlockPreprocessor(Preprocessor):
         equation_dict = self.merge_desc(equation_dict, span_dict)
         self.process_metadata(equation_dict, context_list)
         text = self.handle_context_post(text, equation_dict)
-        self.handle_scene(text, equation_dict)
+        text = self.handle_scene(text, equation_dict)
         # print(text)
         # for k, v in replace_dict.items():
         #     text = text.replace(k, v)
