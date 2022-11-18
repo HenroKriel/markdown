@@ -548,7 +548,7 @@ class IheartlaBlockPreprocessor(Preprocessor):
             shape = scene_json['shape']
 
             if not shape in equation_dict:
-                raise Exception('Shape not defined')               
+                raise Exception(f'{shape} not defined')               
             if not equation_dict[shape].shape:
                 raise Exception(f'{shape} is not a shape')               
 
