@@ -551,6 +551,9 @@ class IheartlaBlockPreprocessor(Preprocessor):
                 raise Exception(f'{shape} not defined')               
             if not equation_dict[shape].shape:
                 raise Exception(f'{shape} is not a shape')               
+            
+            scene_json['transform'] = "\n".join(scene_json['transform'])
+            code_dict = compile_la_content(scene_json['transform'], parser_type=ParserTypeEnum.GLSL, code_only=True)
 
             file = open("./markdown/markdown/extensions/scene/scene.html")
             scene_html = file.read()
@@ -562,6 +565,7 @@ class IheartlaBlockPreprocessor(Preprocessor):
 
             scene_html = scene_html.replace("//INCLUDE LIB", self.md.lib_glsl)
             scene_glsl = scene_glsl.replace("SHAPE", shape)
+            scene_glsl = scene_glsl.replace("//TRANSFORM", code_dict[ParserTypeEnum.GLSL])
             scene_html = scene_html.replace("//INCLUDE SCENE", scene_glsl)
 
             self.md.scene = scene_html

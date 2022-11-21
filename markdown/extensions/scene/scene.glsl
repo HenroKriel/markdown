@@ -2,15 +2,6 @@ uniform float time;
 #define PI 3.14159
 varying vec2 glpos;
 uniform vec2 resolution;
-//glsl handles matrices column-wise, so maybe this isn't an intuitive way to create one
-mat4 rotate_y = mat4(1.0, 0.0, 0.0, 0.0,
-                        0.0, cos(PI/2.0), sin(PI/2.0), 0.0,
-                        0.0, -sin(PI/2.0), cos(PI/2.0), 0.0,
-                        0.0, 0.0, 0.0, 1.0);
-mat4 translate = mat4(1.0, 0.0, 0.0, 0.0,
-                        0.0, 1.0, 0.0, 0.0,
-                        0.0, 0.0, 1.0, 0.0,
-                        0.0, 0.0, 5.0, 1.0);
 
 mat4 transform;
 
@@ -65,7 +56,8 @@ Intersection intersect(Ray ray) {
 }
 
 void main() {
-    transform = translate*rotate_y;
+    //TRANSFORM
+    transform = ret;
     vec2 coord = glpos/min(resolution.x, resolution.y);
     gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
     vec3 eye = vec3(0.0, 0.0, -1.0);
