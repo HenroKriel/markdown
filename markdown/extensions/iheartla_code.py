@@ -543,17 +543,17 @@ class IheartlaBlockPreprocessor(Preprocessor):
             text = self.SCENE_RE.sub('', text)
             
             scene_desc = m.group('code')
-            import json
-            scene_json = json.loads(scene_desc)
-            shape = scene_json['shape']
+            import toml
+            scene_toml = toml.loads(scene_desc)
+            shape = scene_toml['shape']
 
             if not shape in equation_dict:
                 raise Exception(f'{shape} not defined')               
             if not equation_dict[shape].shape:
                 raise Exception(f'{shape} is not a shape')               
             
-            scene_json['transform'] = "\n".join(scene_json['transform'])
-            code_dict = compile_la_content(scene_json['transform'], parser_type=ParserTypeEnum.GLSL, code_only=True)
+            scene_toml['transform'] = "\n".join(scene_toml['transform'])
+            code_dict = compile_la_content(scene_toml['transform'], parser_type=ParserTypeEnum.GLSL, code_only=True)
 
             file = open("./markdown/markdown/extensions/scene/scene.html")
             scene_html = file.read()
