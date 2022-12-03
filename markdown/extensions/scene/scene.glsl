@@ -56,8 +56,7 @@ Intersection intersect(Ray ray) {
 }
 
 void main() {
-    //TRANSFORM
-    transform = ret;
+    transform = sphere_transform().ret;
     vec2 coord = glpos/min(resolution.x, resolution.y);
     gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
     vec3 eye = vec3(0.0, 0.0, -1.0);

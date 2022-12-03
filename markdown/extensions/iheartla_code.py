@@ -10,6 +10,7 @@ import copy
 from collections import OrderedDict
 import regex as re
 import hashlib
+import toml
 if WHEEL_MODE:
     from linear_algebra.iheartla.la_parser.parser import compile_la_content, ParserTypeEnum
     from linear_algebra.iheartla.la_tools.la_helper import DEBUG_MODE, read_from_file, save_to_file, la_warning, la_debug, get_file_base, record
@@ -537,13 +538,26 @@ class IheartlaBlockPreprocessor(Preprocessor):
                 text_list[index] = "<div>❤:{}</div>".format(context_list[index]) + text_list[index]
         return ''.join(text_list)
 
+    # puts transformation functions from scene to iheartla module
+    def get_transform_functions(self, text):
+        m = self.SCENE_RE.search(text)
+        if m != None:
+            scene_desc = m.group('code')
+            scene_toml = toml.loads(scene_desc)
+            text = f"""\
+❤: {scene_toml['shape']}_transform
+```iheartla
+{scene_toml['transform']}
+```
+""" + text
+        return text
+
     def handle_scene(self, text, equation_dict):
         m = self.SCENE_RE.search(text)
         if m != None:
             text = self.SCENE_RE.sub('', text)
             
             scene_desc = m.group('code')
-            import toml
             scene_toml = toml.loads(scene_desc)
             shape = scene_toml['shape']
 
@@ -551,9 +565,6 @@ class IheartlaBlockPreprocessor(Preprocessor):
                 raise Exception(f'{shape} not defined')               
             if not equation_dict[shape].shape:
                 raise Exception(f'{shape} is not a shape')               
-            
-            scene_toml['transform'] = "\n".join(scene_toml['transform'])
-            code_dict = compile_la_content(scene_toml['transform'], parser_type=ParserTypeEnum.GLSL, code_only=True)
 
             file = open("./markdown/markdown/extensions/scene/scene.html")
             scene_html = file.read()
@@ -565,7 +576,6 @@ class IheartlaBlockPreprocessor(Preprocessor):
 
             scene_html = scene_html.replace("//INCLUDE LIB", self.md.lib_glsl)
             scene_glsl = scene_glsl.replace("SHAPE", shape)
-            scene_glsl = scene_glsl.replace("//TRANSFORM", code_dict[ParserTypeEnum.GLSL])
             scene_html = scene_html.replace("//INCLUDE SCENE", scene_glsl)
 
             self.md.scene = scene_html
@@ -777,6 +787,7 @@ class IheartlaBlockPreprocessor(Preprocessor):
             self.checked_for_deps = True
         text = "\n".join(lines)
         #
+        text = self.get_transform_functions(text)
         text, context_list = self.handle_context_pre(text)
         text = self.handle_reference(text)
         text, equation_dict, replace_dict, math_dict, stashed_dict = self.handle_iheartla_code(text)
