@@ -73,7 +73,7 @@ void main() {
         _input.A[0] = vec3(0.1, 0.1, 0.1);
         _input.dim_0 = 1;
         _input.alpha = 1.5;
-        _input.P[0] = vec3(0.0, time, -1.0);
+        _input.P[0] = vec3(0.0, 5.0, -1.0);
         _input.p = sect.pos;
         _input.D[0] = vec3(0.5, 0.5, 0.5);
         _input.S[0] = vec3(0.1, 0.1, 0.1);
