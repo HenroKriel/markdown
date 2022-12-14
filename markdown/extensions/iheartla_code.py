@@ -540,17 +540,30 @@ class IheartlaBlockPreprocessor(Preprocessor):
 
     # puts transformation functions from scene to iheartla module
     def get_transform_functions(self, text):
+        str1 = f"""\
+❤: transformations
+```iheartla
+T(k) = [1 0 0 k_1
+    	0 1 0 k_2
+    	0 0 1 k_3
+    	0 0 0 1] where k ∈ ℝ³
+```
+"""
         m = self.SCENE_RE.search(text)
-        if m != None:
-            scene_desc = m.group('code')
-            scene_toml = toml.loads(scene_desc)
-            text = f"""\
+        if m == None:
+            return str1 + text
+
+        scene_desc = m.group('code')
+        scene_toml = toml.loads(scene_desc)
+
+        str2 = f"""\
 ❤: {scene_toml['shape']}_transform
 ```iheartla
+T from transformations
 {scene_toml['transform']}
 ```
-""" + text
-        return text
+"""
+        return str1 + str2 + text
 
     def handle_scene(self, text, equation_dict):
         m = self.SCENE_RE.search(text)
