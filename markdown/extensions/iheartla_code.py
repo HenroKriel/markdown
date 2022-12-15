@@ -543,10 +543,23 @@ class IheartlaBlockPreprocessor(Preprocessor):
         str1 = f"""\
 ❤: transformations
 ```iheartla
+sin, cos from trigonometry
 T(k) = [1 0 0 k_1
     	0 1 0 k_2
     	0 0 1 k_3
     	0 0 0 1] where k ∈ ℝ³
+`R_x`(θ) = [1 0 0 0
+            0 cos(θ) -sin(θ) 0
+            0 sin(θ) cos(θ) 0
+            0 0 0 1] where θ ∈ ℝ
+`R_y`(θ) = [cos(θ) 0 sin(θ) 0
+            0 1 0 0
+            -sin(θ) 0 cos(θ)  0
+            0 0 0 1] where θ ∈ ℝ
+`R_z`(θ) = [cos(θ) -sin(θ) 0 0
+            sin(θ) cos(θ)  0 0
+            0 0 1 0
+            0 0 0 1] where θ ∈ ℝ
 ```
 """
         m = self.SCENE_RE.search(text)
@@ -559,7 +572,7 @@ T(k) = [1 0 0 k_1
         str2 = f"""\
 ❤: {scene_toml['shape']}_transform
 ```iheartla
-T from transformations
+T, `R_x`, `R_y`, `R_z` from transformations
 {scene_toml['transform']}
 ```
 """

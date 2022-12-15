@@ -1,5 +1,4 @@
 uniform float time;
-#define PI 3.14159
 varying vec2 glpos;
 uniform vec2 resolution;
 
@@ -56,7 +55,7 @@ Intersection intersect(Ray ray) {
 }
 
 void main() {
-    transform = sphere_transform().ret;
+    transform = SHAPE_transform().ret;
     vec2 coord = glpos/min(resolution.x, resolution.y);
     gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
     vec3 eye = vec3(0.0, 0.0, -1.0);
