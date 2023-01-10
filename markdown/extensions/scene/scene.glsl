@@ -2,8 +2,6 @@ uniform float time;
 varying vec2 glpos;
 uniform vec2 resolution;
 
-mat4 transform;
-
 struct Intersection {
     bool valid;
     vec3 pos;
@@ -17,45 +15,24 @@ struct Ray {
 };
 
 Intersection intersect(Ray ray) {
-    Intersection ret;
-    ret.valid = false;
-
-    vec4 p = inverse(transform)*vec4(ray.p, 1.0);
-    vec4 d = vec4(inverse(mat3(transform))*ray.d, 0.0);
-    
-    float total_dist = 0.0;
     const float MAX_DIST = 100.0;
     const float MIN_HIT_DIST = 0.01;
     const int NUM_ITER = 32;
 
-    for(int i = 0; i < NUM_ITER; i++) {
-        vec4 sect = p + d*total_dist;
+    vec4 p;
+    vec4 d;
+    float total_dist;
 
-        SHAPE_input _input = SHAPE_input(vec3(sect));
-        float dist = SHAPE(_input).d;
+    Intersection best;
+    best.valid = false;
+    best.t = MAX_DIST;
 
-        if(dist < MIN_HIT_DIST) {
-            ret.valid = true;
-            //needs differentiation
-            vec3 norm = grad_SHAPE(_input);
+    //INCLUDE INTERSECT
 
-            ret.pos = (transform*sect).xyz;
-            //precompute inverse function
-            ret.norm = (transpose(inverse(mat3(transform)))*norm.xyz);
-            ret.norm = normalize(ret.norm);
-            
-            return ret;
-        }
-
-        if(total_dist > MAX_DIST)
-            return ret;
-
-        total_dist += dist;
-    }
+    return best;
 }
 
 void main() {
-    transform = SHAPE_transform().ret;
     vec2 coord = glpos/min(resolution.x, resolution.y);
     gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
     vec3 eye = vec3(0.0, 0.0, -1.0);

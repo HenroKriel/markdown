@@ -569,13 +569,15 @@ T(k) = [1 0 0 k_1
         scene_desc = m.group('code')
         scene_toml = toml.loads(scene_desc)
 
-        str2 = f"""\
-❤: {scene_toml['shape']}_transform
+        str2 = ''
+        for shape in scene_toml['shapes']:
+            str2 += f"""\
+❤: {shape['type']}_transform
 ```iheartla
 T, `R_x`, `R_y`, `R_z` from transformations
-{scene_toml['transform']}
+{shape['transform']}
 ```
-"""
+    """
         return str1 + str2 + text
 
     def handle_scene(self, text, equation_dict):
@@ -585,12 +587,57 @@ T, `R_x`, `R_y`, `R_z` from transformations
             
             scene_desc = m.group('code')
             scene_toml = toml.loads(scene_desc)
-            shape = scene_toml['shape']
+            shapes = scene_toml['shapes']
 
-            if not shape in equation_dict:
-                raise Exception(f'{shape} not defined')               
-            if not equation_dict[shape].shape:
-                raise Exception(f'{shape} is not a shape')               
+            intersect_boiler = """Intersection SHAPE_ret;
+    SHAPE_ret.valid = false;
+    SHAPE_ret.t = MAX_DIST;
+
+    p = inverse(SHAPE_transform().ret)*vec4(ray.p, 1.0);
+    d = vec4(inverse(mat3(SHAPE_transform().ret))*ray.d, 0.0);
+    
+    total_dist = 0.0;
+
+    for(int i = 0; i < NUM_ITER; i++) {
+        vec4 sect = p + d*total_dist;
+
+        SHAPE_input _input = SHAPE_input(vec3(sect));
+        float dist = SHAPE(_input).d;
+
+        if(dist < MIN_HIT_DIST) {
+            SHAPE_ret.valid = true;
+            SHAPE_ret.t = total_dist;
+            //needs differentiation
+            vec3 norm = grad_SHAPE(_input);
+
+            SHAPE_ret.pos = (SHAPE_transform().ret*sect).xyz;
+            //precompute inverse function
+            SHAPE_ret.norm = (transpose(inverse(mat3(SHAPE_transform().ret)))*norm.xyz);
+            SHAPE_ret.norm = normalize(SHAPE_ret.norm);
+            
+            break;
+        }
+
+        if(total_dist > MAX_DIST)
+            break;
+
+        total_dist += dist;
+    }
+
+    if(SHAPE_ret.t < best.t)
+        best = SHAPE_ret;
+
+"""
+
+            intersect = ''
+            for shape in shapes:
+                shape_type = shape['type']
+                if not shape_type in equation_dict:
+                    raise Exception(f'{shape_type} not defined')               
+                if not equation_dict[shape_type].shape:
+                    raise Exception(f'{shape_type} is not a shape')               
+                
+                intersect += intersect_boiler.replace("SHAPE", shape_type)
 
             file = open("./markdown/markdown/extensions/scene/scene.html")
             scene_html = file.read()
@@ -601,7 +648,7 @@ T, `R_x`, `R_y`, `R_z` from transformations
             file.close()
 
             scene_html = scene_html.replace("//INCLUDE LIB", self.md.lib_glsl)
-            scene_glsl = scene_glsl.replace("SHAPE", shape)
+            scene_glsl = scene_glsl.replace("//INCLUDE INTERSECT", intersect)
             scene_html = scene_html.replace("//INCLUDE SCENE", scene_glsl)
 
             self.md.scene = scene_html
