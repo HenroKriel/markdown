@@ -569,10 +569,16 @@ T(k) = [1 0 0 k_1
         scene_desc = m.group('code')
         scene_toml = toml.loads(scene_desc)
 
+        type_count = {}
+
         str2 = ''
         for shape in scene_toml['shapes']:
+            if shape['type'] not in type_count:
+                type_count[shape['type']] = 0
+            type_count[shape['type']] += 1
+
             str2 += f"""\
-❤: {shape['type']}_transform
+❤: {shape['type']}_{type_count[shape['type']]}_transform
 ```iheartla
 T, `R_x`, `R_y`, `R_z` from transformations
 {shape['transform']}
@@ -601,14 +607,14 @@ T, `R_x`, `R_y`, `R_z` from transformations
     for(int i = 0; i < NUM_ITER; i++) {
         vec4 sect = p + d*total_dist;
 
-        SHAPE_input _input = SHAPE_input(vec3(sect));
-        float dist = SHAPE(_input).d;
+        TYPE_input _input = TYPE_input(vec3(sect));
+        float dist = TYPE(_input).d;
 
         if(dist < MIN_HIT_DIST) {
             SHAPE_ret.valid = true;
             SHAPE_ret.t = total_dist;
             //needs differentiation
-            vec3 norm = grad_SHAPE(_input);
+            vec3 norm = grad_TYPE(_input);
 
             SHAPE_ret.pos = (SHAPE_transform().ret*sect).xyz;
             //precompute inverse function
@@ -629,15 +635,23 @@ T, `R_x`, `R_y`, `R_z` from transformations
 
 """
 
+            type_count = {}
+
             intersect = ''
             for shape in shapes:
-                shape_type = shape['type']
-                if not shape_type in equation_dict:
-                    raise Exception(f'{shape_type} not defined')               
-                if not equation_dict[shape_type].shape:
-                    raise Exception(f'{shape_type} is not a shape')               
+                if not shape['type'] in equation_dict:
+                    raise Exception(f"{shape['type']} not defined")
+                if not equation_dict[shape['type']].shape:
+                    raise Exception(f"{shape['type']} is not a shape")
                 
-                intersect += intersect_boiler.replace("SHAPE", shape_type)
+                if shape['type'] not in type_count:
+                    type_count[shape['type']] = 0
+                type_count[shape['type']] += 1
+
+                temp_intersect = intersect_boiler
+                temp_intersect = temp_intersect.replace("TYPE", f"{shape['type']}")
+                temp_intersect = temp_intersect.replace("SHAPE", f"{shape['type']}_{type_count[shape['type']]}")
+                intersect += temp_intersect
 
             file = open("./markdown/markdown/extensions/scene/scene.html")
             scene_html = file.read()
