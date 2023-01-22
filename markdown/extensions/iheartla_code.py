@@ -595,12 +595,14 @@ T, `R_x`, `R_y`, `R_z` from transformations
             scene_toml = toml.loads(scene_desc)
             shapes = scene_toml['shapes']
 
+            # Here TYPE refers to the type of shape and SHAPE refers to the specific enumerated shape.
             intersect_boiler = """Intersection SHAPE_ret;
     SHAPE_ret.valid = false;
     SHAPE_ret.t = MAX_DIST;
 
-    p = inverse(SHAPE_transform().ret)*vec4(ray.p, 1.0);
-    d = vec4(inverse(mat3(SHAPE_transform().ret))*ray.d, 0.0);
+    //INCLUDE INPUTS
+    p = inverse(SHAPE_transform(TRANSFORM_INPUT).ret)*vec4(ray.p, 1.0);
+    d = vec4(inverse(mat3(SHAPE_transform(TRANSFORM_INPUT).ret))*ray.d, 0.0);
     
     total_dist = 0.0;
 
@@ -616,9 +618,9 @@ T, `R_x`, `R_y`, `R_z` from transformations
             //needs differentiation
             vec3 norm = grad_TYPE(_input);
 
-            SHAPE_ret.pos = (SHAPE_transform().ret*sect).xyz;
+            SHAPE_ret.pos = (SHAPE_transform(TRANSFORM_INPUT).ret*sect).xyz;
             //precompute inverse function
-            SHAPE_ret.norm = (transpose(inverse(mat3(SHAPE_transform().ret)))*norm.xyz);
+            SHAPE_ret.norm = (transpose(inverse(mat3(SHAPE_transform(TRANSFORM_INPUT).ret)))*norm.xyz);
             SHAPE_ret.norm = normalize(SHAPE_ret.norm);
             
             break;
@@ -638,6 +640,11 @@ T, `R_x`, `R_y`, `R_z` from transformations
             type_count = {}
 
             intersect = ''
+            scene_params = ''
+            guiadd = ''
+            js_uniforms = ''
+            glsl_uniforms = ''
+            scene_animate = ''
             for shape in shapes:
                 if not shape['type'] in equation_dict:
                     raise Exception(f"{shape['type']} not defined")
@@ -648,9 +655,25 @@ T, `R_x`, `R_y`, `R_z` from transformations
                     type_count[shape['type']] = 0
                 type_count[shape['type']] += 1
 
+                shape_id = f"{shape['type']}_{type_count[shape['type']]}"
                 temp_intersect = intersect_boiler
                 temp_intersect = temp_intersect.replace("TYPE", f"{shape['type']}")
-                temp_intersect = temp_intersect.replace("SHAPE", f"{shape['type']}_{type_count[shape['type']]}")
+                temp_intersect = temp_intersect.replace("SHAPE", shape_id)
+                if len(equation_dict[f'{shape_id}_transform'].parameters) == 0:
+                    temp_intersect = temp_intersect.replace("//INCLUDE INPUTS", "")
+                    temp_intersect = temp_intersect.replace("TRANSFORM_INPUT", "")
+                else:
+                    inputs = f"{shape_id}_transform_input {shape_id}_input;\n"
+                    for param in equation_dict[f'{shape_id}_transform'].parameters:
+                        scene_params += f"{shape_id}_{param}: 1,\n"
+                        guiadd += f"gui.add( myObject, '{shape_id}_{param}', 0, 10);\n"
+                        js_uniforms += f"{shape_id}_{param}: {{ value: 1.0 }},\n"
+                        glsl_uniforms += f"uniform float {shape_id}_{param};\n"
+                        scene_animate += f"material.uniforms.{shape_id}_{param}.value = myObject.{shape_id}_{param};"
+
+                        inputs += f"{shape_id}_input.{param} = {shape_id}_{param};\n"
+                    temp_intersect = temp_intersect.replace("//INCLUDE INPUTS", inputs)
+                    temp_intersect = temp_intersect.replace("TRANSFORM_INPUT", f"{shape_id}_input")
                 intersect += temp_intersect
 
             file = open("./markdown/markdown/extensions/scene/scene.html")
@@ -663,7 +686,13 @@ T, `R_x`, `R_y`, `R_z` from transformations
 
             scene_html = scene_html.replace("//INCLUDE LIB", self.md.lib_glsl)
             scene_glsl = scene_glsl.replace("//INCLUDE INTERSECT", intersect)
+            scene_glsl = scene_glsl.replace("//INCLUDE UNIFORMS", glsl_uniforms)
             scene_html = scene_html.replace("//INCLUDE SCENE", scene_glsl)
+
+            scene_html = scene_html.replace("//INCLUDE PARAMS", scene_params)
+            scene_html = scene_html.replace("//INCLUDE GUIADD", guiadd)
+            scene_html = scene_html.replace("//INCLUDE UNIFORMS", js_uniforms)
+            scene_html = scene_html.replace("//INCLUDE ANIMATE", scene_animate)
 
             self.md.scene = scene_html
         return text

@@ -23,7 +23,14 @@
             //INCLUDE LIB
             //INCLUDE SCENE
         </script>
-        <script>
+        <script type="module">
+            import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.17/+esm';
+            const gui = new GUI();
+            const myObject = {
+                //INCLUDE PARAMS
+            };
+            //INCLUDE GUIADD
+
             const scene = new THREE.Scene();
             //change to relative width and height
             const camera = new THREE.OrthographicCamera(-window.innerWidth/2, window.innerWidth/2, window.innerHeight/2, -window.innerHeight/2, -0.5, 0.5);
@@ -36,6 +43,7 @@
             const material = new THREE.ShaderMaterial( {
                 uniforms: {
                     time: { value: 0.0 },
+                    //INCLUDE UNIFORMS
                     resolution: new THREE.Uniform(new THREE.Vector2(window.innerWidth, window.innerHeight))
                 },
 
@@ -51,6 +59,7 @@
             
             function animate() {
                 material.uniforms.time.value = clock.getElapsedTime();
+                //INCLUDE ANIMATE
                 requestAnimationFrame( animate );
                 renderer.render( scene, camera );
             }

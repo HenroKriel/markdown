@@ -1,6 +1,7 @@
 uniform float time;
 varying vec2 glpos;
 uniform vec2 resolution;
+//INCLUDE UNIFORMS
 
 struct Intersection {
     bool valid;
