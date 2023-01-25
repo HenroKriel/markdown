@@ -665,9 +665,9 @@ T, `R_x`, `R_y`, `R_z` from transformations
                 else:
                     inputs = f"{shape_id}_transform_input {shape_id}_input;\n"
                     for param in equation_dict[f'{shape_id}_transform'].parameters:
-                        scene_params += f"{shape_id}_{param}: 1,\n"
-                        guiadd += f"gui.add( myObject, '{shape_id}_{param}', 0, 10);\n"
-                        js_uniforms += f"{shape_id}_{param}: {{ value: 1.0 }},\n"
+                        scene_params += f"{shape_id}_{param}: 0,\n"
+                        guiadd += f"gui.add( myObject, '{shape_id}_{param}', -10, 10);\n"
+                        js_uniforms += f"{shape_id}_{param}: {{ value: 0.0 }},\n"
                         glsl_uniforms += f"uniform float {shape_id}_{param};\n"
                         scene_animate += f"material.uniforms.{shape_id}_{param}.value = myObject.{shape_id}_{param};"
 
