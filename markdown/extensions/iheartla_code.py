@@ -596,32 +596,34 @@ T, `R_x`, `R_y`, `R_z` from transformations
             shapes = scene_toml['shapes']
 
             # Here TYPE refers to the type of shape and SHAPE refers to the specific enumerated shape.
-            intersect_boiler = """Intersection SHAPE_ret;
-    SHAPE_ret.valid = false;
-    SHAPE_ret.t = MAX_DIST;
+            intersect_boiler = """Intersection /SHAPE/_ret;
+    /SHAPE/_ret.valid = false;
+    /SHAPE/_ret.t = MAX_DIST;
 
-    //INCLUDE INPUTS
-    p = inverse(SHAPE_transform(TRANSFORM_INPUT).ret)*vec4(ray.p, 1.0);
-    d = vec4(inverse(mat3(SHAPE_transform(TRANSFORM_INPUT).ret))*ray.d, 0.0);
+    //INCLUDE TRANSFORM PARAMS
+    p = inverse(/SHAPE/_transform(/TRANSFORM_INPUT/).ret)*vec4(ray.p, 1.0);
+    d = vec4(inverse(mat3(/SHAPE/_transform(/TRANSFORM_INPUT/).ret))*ray.d, 0.0);
     
     total_dist = 0.0;
 
     for(int i = 0; i < NUM_ITER; i++) {
         vec4 sect = p + d*total_dist;
 
-        TYPE_input _input = TYPE_input(vec3(sect));
-        float dist = TYPE(_input).d;
+        /TYPE/_input _input;
+        _input.p = vec3(sect);
+        //INCLUDE SHAPE PARAMS
+        float dist = /TYPE/(_input).d;
 
         if(dist < MIN_HIT_DIST) {
-            SHAPE_ret.valid = true;
-            SHAPE_ret.t = total_dist;
+            /SHAPE/_ret.valid = true;
+            /SHAPE/_ret.t = total_dist;
             //needs differentiation
-            vec3 norm = grad_TYPE(_input);
+            vec3 norm = grad_/TYPE/(_input);
 
-            SHAPE_ret.pos = (SHAPE_transform(TRANSFORM_INPUT).ret*sect).xyz;
+            /SHAPE/_ret.pos = (/SHAPE/_transform(/TRANSFORM_INPUT/).ret*sect).xyz;
             //precompute inverse function
-            SHAPE_ret.norm = (transpose(inverse(mat3(SHAPE_transform(TRANSFORM_INPUT).ret)))*norm.xyz);
-            SHAPE_ret.norm = normalize(SHAPE_ret.norm);
+            /SHAPE/_ret.norm = (transpose(inverse(mat3(/SHAPE/_transform(/TRANSFORM_INPUT/).ret)))*norm.xyz);
+            /SHAPE/_ret.norm = normalize(/SHAPE/_ret.norm);
             
             break;
         }
@@ -632,8 +634,8 @@ T, `R_x`, `R_y`, `R_z` from transformations
         total_dist += dist;
     }
 
-    if(SHAPE_ret.t < best.t)
-        best = SHAPE_ret;
+    if(/SHAPE/_ret.t < best.t)
+        best = /SHAPE/_ret;
 
 """
 
@@ -657,23 +659,36 @@ T, `R_x`, `R_y`, `R_z` from transformations
 
                 shape_id = f"{shape['type']}_{type_count[shape['type']]}"
                 temp_intersect = intersect_boiler
-                temp_intersect = temp_intersect.replace("TYPE", f"{shape['type']}")
-                temp_intersect = temp_intersect.replace("SHAPE", shape_id)
+                temp_intersect = temp_intersect.replace("/TYPE/", f"{shape['type']}")
+                temp_intersect = temp_intersect.replace("/SHAPE/", shape_id)
+                
+                #add parameters for transformation function
                 if len(equation_dict[f'{shape_id}_transform'].parameters) == 0:
-                    temp_intersect = temp_intersect.replace("//INCLUDE INPUTS", "")
-                    temp_intersect = temp_intersect.replace("TRANSFORM_INPUT", "")
+                    temp_intersect = temp_intersect.replace("//INCLUDE TRANSFORM PARAMS", "")
+                    temp_intersect = temp_intersect.replace("/TRANSFORM_INPUT/", "")
                 else:
                     inputs = f"{shape_id}_transform_input {shape_id}_input;\n"
                     for param in equation_dict[f'{shape_id}_transform'].parameters:
                         scene_params += f"{shape_id}_{param}: 0,\n"
-                        guiadd += f"gui.add( myObject, '{shape_id}_{param}', -10, 10);\n"
+                        guiadd += f"gui.add( myObject, '{shape_id}_{param}', -5, 5);\n"
                         js_uniforms += f"{shape_id}_{param}: {{ value: 0.0 }},\n"
                         glsl_uniforms += f"uniform float {shape_id}_{param};\n"
-                        scene_animate += f"material.uniforms.{shape_id}_{param}.value = myObject.{shape_id}_{param};"
-
+                        scene_animate += f"material.uniforms.{shape_id}_{param}.value = myObject.{shape_id}_{param};\n"
                         inputs += f"{shape_id}_input.{param} = {shape_id}_{param};\n"
-                    temp_intersect = temp_intersect.replace("//INCLUDE INPUTS", inputs)
-                    temp_intersect = temp_intersect.replace("TRANSFORM_INPUT", f"{shape_id}_input")
+                    temp_intersect = temp_intersect.replace("//INCLUDE TRANSFORM PARAMS", inputs)
+                    temp_intersect = temp_intersect.replace("/TRANSFORM_INPUT/", f"{shape_id}_input")
+
+                #add parameters for shapes
+                if len(equation_dict[shape['type']].parameters) > 1:
+                    inputs = ''
+                    for param in equation_dict[shape['type']].parameters[1:]:
+                        scene_params += f"{shape_id}_{param}: 0,\n"
+                        guiadd += f"gui.add( myObject, '{shape_id}_{param}', -5, 5);\n"
+                        js_uniforms += f"{shape_id}_{param}: {{ value: 0.0 }},\n"
+                        glsl_uniforms += f"uniform float {shape_id}_{param};\n"
+                        scene_animate += f"material.uniforms.{shape_id}_{param}.value = myObject.{shape_id}_{param};\n"
+                        inputs += f"_input.{param} = {shape_id}_{param};\n"
+                    temp_intersect = temp_intersect.replace("//INCLUDE SHAPE PARAMS", inputs)
                 intersect += temp_intersect
 
             file = open("./markdown/markdown/extensions/scene/scene.html")
