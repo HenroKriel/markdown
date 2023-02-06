@@ -1,5 +1,7 @@
 import os
 from textwrap import dedent
+
+from iheartla.iheartla.la_parser.la_types import VarTypeEnum
 from . import Extension, WHEEL_MODE
 from ..preprocessors import Preprocessor
 from ..postprocessors import Postprocessor
@@ -598,6 +600,7 @@ T, `R_x`, `R_y`, `R_z` from transformations
             # Here TYPE refers to the type of shape and SHAPE refers to the specific enumerated shape.
             intersect_boiler = """Intersection /SHAPE/_ret;
     /SHAPE/_ret.valid = false;
+    /SHAPE/_ret.material = /MATERIAL_ID/;
     /SHAPE/_ret.t = MAX_DIST;
 
     //INCLUDE TRANSFORM PARAMS
@@ -612,7 +615,7 @@ T, `R_x`, `R_y`, `R_z` from transformations
         /TYPE/_input _input;
         _input.p = vec3(sect);
         //INCLUDE SHAPE PARAMS
-        float dist = /TYPE/(_input).d;
+        float dist = /TYPE/(_input).D;
 
         if(dist < MIN_HIT_DIST) {
             /SHAPE/_ret.valid = true;
@@ -640,6 +643,7 @@ T, `R_x`, `R_y`, `R_z` from transformations
 """
 
             type_count = {}
+            count = 1
 
             intersect = ''
             scene_params = ''
@@ -647,12 +651,18 @@ T, `R_x`, `R_y`, `R_z` from transformations
             js_uniforms = ''
             glsl_uniforms = ''
             scene_animate = ''
+            materials = ''
             for shape in shapes:
                 if not shape['type'] in equation_dict:
                     raise Exception(f"{shape['type']} not defined")
                 if not equation_dict[shape['type']].shape:
                     raise Exception(f"{shape['type']} is not a shape")
-                
+
+                if not shape['material'] in equation_dict:
+                    raise Exception(f"{shape['material']} not defined")
+                if not equation_dict[shape['material']].material:
+                    raise Exception(f"{shape['material']} is not a material")
+
                 if shape['type'] not in type_count:
                     type_count[shape['type']] = 0
                 type_count[shape['type']] += 1
@@ -661,35 +671,74 @@ T, `R_x`, `R_y`, `R_z` from transformations
                 temp_intersect = intersect_boiler
                 temp_intersect = temp_intersect.replace("/TYPE/", f"{shape['type']}")
                 temp_intersect = temp_intersect.replace("/SHAPE/", shape_id)
+                temp_intersect = temp_intersect.replace("/MATERIAL_ID/", f"{count}")
                 
                 #add parameters for transformation function
-                if len(equation_dict[f'{shape_id}_transform'].parameters) == 0:
+                if len(equation_dict[f'{shape_id}_transform'].trimmed_params) == 0:
                     temp_intersect = temp_intersect.replace("//INCLUDE TRANSFORM PARAMS", "")
                     temp_intersect = temp_intersect.replace("/TRANSFORM_INPUT/", "")
                 else:
                     inputs = f"{shape_id}_transform_input {shape_id}_input;\n"
-                    for param in equation_dict[f'{shape_id}_transform'].parameters:
-                        scene_params += f"{shape_id}_{param}: 0,\n"
-                        guiadd += f"gui.add( myObject, '{shape_id}_{param}', -5, 5);\n"
-                        js_uniforms += f"{shape_id}_{param}: {{ value: 0.0 }},\n"
-                        glsl_uniforms += f"uniform float {shape_id}_{param};\n"
-                        scene_animate += f"material.uniforms.{shape_id}_{param}.value = myObject.{shape_id}_{param};\n"
-                        inputs += f"{shape_id}_input.{param} = {shape_id}_{param};\n"
+                    for param in equation_dict[f'{shape_id}_transform'].trimmed_params:
+                        scene_params += f"{shape_id}_transform_{param}: 0,\n"
+                        guiadd += f"gui.add( myObject, '{shape_id}_transform_{param}', -5, 5);\n"
+                        js_uniforms += f"{shape_id}_transform_{param}: {{ value: 0.0 }},\n"
+                        glsl_uniforms += f"uniform float {shape_id}_transform_{param};\n"
+                        scene_animate += f"material.uniforms.{shape_id}_transform_{param}.value = myObject.{shape_id}_transform_{param};\n"
+                        inputs += f"{shape_id}_input.{param} = {shape_id}_transform_{param};\n"
                     temp_intersect = temp_intersect.replace("//INCLUDE TRANSFORM PARAMS", inputs)
                     temp_intersect = temp_intersect.replace("/TRANSFORM_INPUT/", f"{shape_id}_input")
 
                 #add parameters for shapes
-                if len(equation_dict[shape['type']].parameters) > 1:
+                if len(equation_dict[shape['type']].trimmed_params) > 1:
                     inputs = ''
-                    for param in equation_dict[shape['type']].parameters[1:]:
-                        scene_params += f"{shape_id}_{param}: 0,\n"
-                        guiadd += f"gui.add( myObject, '{shape_id}_{param}', -5, 5);\n"
-                        js_uniforms += f"{shape_id}_{param}: {{ value: 0.0 }},\n"
-                        glsl_uniforms += f"uniform float {shape_id}_{param};\n"
-                        scene_animate += f"material.uniforms.{shape_id}_{param}.value = myObject.{shape_id}_{param};\n"
-                        inputs += f"_input.{param} = {shape_id}_{param};\n"
+                    for param in equation_dict[shape['type']].trimmed_params[1:]:
+                        scene_params += f"{shape_id}_shape_{param}: 0,\n"
+                        guiadd += f"gui.add( myObject, '{shape_id}_shape_{param}', -5, 5);\n"
+                        js_uniforms += f"{shape_id}_shape_{param}: {{ value: 0.0 }},\n"
+                        glsl_uniforms += f"uniform float {shape_id}_shape_{param};\n"
+                        scene_animate += f"material.uniforms.{shape_id}_shape_{param}.value = myObject.{shape_id}_shape_{param};\n"
+                        inputs += f"_input.{param} = {shape_id}_shape_{param};\n"
                     temp_intersect = temp_intersect.replace("//INCLUDE SHAPE PARAMS", inputs)
+
+                #add parameters for material
+                if len(equation_dict[shape['material']].trimmed_params) > 3:
+                    inputs = ''
+                    temp_material = f"""if(sect.material == {count}) {{
+                        phong_input _input;
+                        _input.p = sect.pos;
+                        _input.N_hat = sect.norm;
+                        _input.I = eye;
+                        //INCLUDE INPUTS
+                        color = phong(_input).C;
+                    }}
+                    """
+                    for i in range(3, len(equation_dict[shape['material']].trimmed_params)):
+                        param = equation_dict[shape['material']].trimmed_params[i]
+                        param_type = equation_dict[shape['material']].symtable[equation_dict[shape['material']].parameters[i]]
+
+                        if param_type.var_type == VarTypeEnum.SCALAR:
+                            scene_params += f"{shape_id}_material_{param}: 0,\n"
+                            guiadd += f"gui.add( myObject, '{shape_id}_material_{param}', -5, 5);\n"
+                            js_uniforms += f"{shape_id}_material_{param}: {{ value: 0.0 }},\n"
+                            glsl_uniforms += f"uniform float {shape_id}_material_{param};\n"
+                            scene_animate += f"material.uniforms.{shape_id}_material_{param}.value = myObject.{shape_id}_material_{param};\n"
+                            inputs += f"_input.{param} = {shape_id}_material_{param};\n"
+
+                        if param_type.var_type == VarTypeEnum.VECTOR:
+                            component_list = ', '.join([f'myObject.{shape_id}_material_{param}_{i}' for i in range(1, param_type.rows+1)])
+                            for i in range(1, param_type.rows+1):
+                                scene_params += f"{shape_id}_material_{param}_{i}: 0,\n"
+                                guiadd += f"gui.add( myObject, '{shape_id}_material_{param}_{i}', -5, 5);\n"
+                            glsl_uniforms += f"uniform vec{param_type.rows} {shape_id}_material_{param};\n"
+                            js_uniforms += f"{shape_id}_material_{param}: new THREE.Uniform(new THREE.Vector{param_type.rows}({component_list})),\n"
+                            inputs += f"_input.{param} = {shape_id}_material_{param};\n"
+                            scene_animate += f"material.uniforms.{shape_id}_material_{param}.value = new THREE.Vector{param_type.rows}({component_list});\n"
+                    temp_material = temp_material.replace("//INCLUDE INPUTS", inputs)
+                    materials += temp_material
+
                 intersect += temp_intersect
+                count += 1
 
             file = open("./markdown/markdown/extensions/scene/scene.html")
             scene_html = file.read()
@@ -702,6 +751,7 @@ T, `R_x`, `R_y`, `R_z` from transformations
             scene_html = scene_html.replace("//INCLUDE LIB", self.md.lib_glsl)
             scene_glsl = scene_glsl.replace("//INCLUDE INTERSECT", intersect)
             scene_glsl = scene_glsl.replace("//INCLUDE UNIFORMS", glsl_uniforms)
+            scene_glsl = scene_glsl.replace("//INCLUDE MATERIALS", materials)
             scene_html = scene_html.replace("//INCLUDE SCENE", scene_glsl)
 
             scene_html = scene_html.replace("//INCLUDE PARAMS", scene_params)

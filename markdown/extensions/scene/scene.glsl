@@ -8,6 +8,7 @@ struct Intersection {
     vec3 pos;
     vec3 norm;
     float t;
+    int material;
 };
 
 struct Ray {
@@ -42,21 +43,7 @@ void main() {
     if(sect.valid) {
         vec3 color = vec3(1.0);
 
-        //need a standard for position and normal inputs
-        phong_input _input;
-        _input.k_a = vec3(0.1, 0.1, 0.1);
-        _input.k_d = vec3(0.0, 1.0, 0.0);
-        _input.k_s = vec3(0.5, 0.5, 0.5);
-        _input.A[0] = vec3(0.1, 0.1, 0.1);
-        _input.dim_0 = 1;
-        _input.alpha = 1.5;
-        _input.P[0] = vec3(0.0, 5.0, -1.0);
-        _input.p = sect.pos;
-        _input.D[0] = vec3(0.5, 0.5, 0.5);
-        _input.S[0] = vec3(0.1, 0.1, 0.1);
-        _input.N_hat = sect.norm;
-        _input.V_hat = eye - sect.pos;
-        color = phong(_input).I_p;
+        //INCLUDE MATERIALS
 
         gl_FragColor = vec4(color, 1.0);
         //gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
