@@ -672,6 +672,8 @@ T, `R_x`, `R_y`, `R_z` from transformations
                 temp_intersect = temp_intersect.replace("/TYPE/", f"{shape['type']}")
                 temp_intersect = temp_intersect.replace("/SHAPE/", shape_id)
                 temp_intersect = temp_intersect.replace("/MATERIAL_ID/", f"{count}")
+
+                guiadd += f"const {shape_id} = gui.addFolder('{shape_id}');"
                 
                 #add parameters for transformation function
                 if len(equation_dict[f'{shape_id}_transform'].trimmed_params) == 0:
@@ -679,9 +681,10 @@ T, `R_x`, `R_y`, `R_z` from transformations
                     temp_intersect = temp_intersect.replace("/TRANSFORM_INPUT/", "")
                 else:
                     inputs = f"{shape_id}_transform_input {shape_id}_input;\n"
+                    guiadd += f"const {shape_id}_transform = {shape_id}.addFolder('transform');"
                     for param in equation_dict[f'{shape_id}_transform'].trimmed_params:
                         scene_params += f"{shape_id}_transform_{param}: 0,\n"
-                        guiadd += f"gui.add( myObject, '{shape_id}_transform_{param}', -5, 5);\n"
+                        guiadd += f"{shape_id}_transform.add( myObject, '{shape_id}_transform_{param}', -5, 5);\n"
                         js_uniforms += f"{shape_id}_transform_{param}: {{ value: 0.0 }},\n"
                         glsl_uniforms += f"uniform float {shape_id}_transform_{param};\n"
                         scene_animate += f"material.uniforms.{shape_id}_transform_{param}.value = myObject.{shape_id}_transform_{param};\n"
@@ -692,9 +695,10 @@ T, `R_x`, `R_y`, `R_z` from transformations
                 #add parameters for shapes
                 if len(equation_dict[shape['type']].trimmed_params) > 1:
                     inputs = ''
+                    guiadd += f"const {shape_id}_shape = {shape_id}.addFolder('shape');"
                     for param in equation_dict[shape['type']].trimmed_params[1:]:
                         scene_params += f"{shape_id}_shape_{param}: 0,\n"
-                        guiadd += f"gui.add( myObject, '{shape_id}_shape_{param}', -5, 5);\n"
+                        guiadd += f"{shape_id}_shape.add( myObject, '{shape_id}_shape_{param}', -5, 5);\n"
                         js_uniforms += f"{shape_id}_shape_{param}: {{ value: 0.0 }},\n"
                         glsl_uniforms += f"uniform float {shape_id}_shape_{param};\n"
                         scene_animate += f"material.uniforms.{shape_id}_shape_{param}.value = myObject.{shape_id}_shape_{param};\n"
@@ -713,13 +717,15 @@ T, `R_x`, `R_y`, `R_z` from transformations
                         color = phong(_input).C;
                     }}
                     """
+                    guiadd += f"const {shape_id}_material = {shape_id}.addFolder('material');"
+
                     for i in range(3, len(equation_dict[shape['material']].trimmed_params)):
                         param = equation_dict[shape['material']].trimmed_params[i]
                         param_type = equation_dict[shape['material']].symtable[equation_dict[shape['material']].parameters[i]]
 
                         if param_type.var_type == VarTypeEnum.SCALAR:
                             scene_params += f"{shape_id}_material_{param}: 0,\n"
-                            guiadd += f"gui.add( myObject, '{shape_id}_material_{param}', -5, 5);\n"
+                            guiadd += f"{shape_id}_material.add( myObject, '{shape_id}_material_{param}', -5, 5);\n"
                             js_uniforms += f"{shape_id}_material_{param}: {{ value: 0.0 }},\n"
                             glsl_uniforms += f"uniform float {shape_id}_material_{param};\n"
                             scene_animate += f"material.uniforms.{shape_id}_material_{param}.value = myObject.{shape_id}_material_{param};\n"
@@ -729,7 +735,7 @@ T, `R_x`, `R_y`, `R_z` from transformations
                             component_list = ', '.join([f'myObject.{shape_id}_material_{param}_{i}' for i in range(1, param_type.rows+1)])
                             for i in range(1, param_type.rows+1):
                                 scene_params += f"{shape_id}_material_{param}_{i}: 0,\n"
-                                guiadd += f"gui.add( myObject, '{shape_id}_material_{param}_{i}', -5, 5);\n"
+                                guiadd += f"{shape_id}_material.add( myObject, '{shape_id}_material_{param}_{i}', -5, 5);\n"
                             glsl_uniforms += f"uniform vec{param_type.rows} {shape_id}_material_{param};\n"
                             js_uniforms += f"{shape_id}_material_{param}: new THREE.Uniform(new THREE.Vector{param_type.rows}({component_list})),\n"
                             inputs += f"_input.{param} = {shape_id}_material_{param};\n"

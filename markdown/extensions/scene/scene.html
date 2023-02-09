@@ -31,6 +31,11 @@
             };
             //INCLUDE GUIADD
 
+            let folders = gui.foldersRecursive();
+            for(let i = 0; i < folders.length; i++) {
+                folders[i].close();
+            }
+
             const scene = new THREE.Scene();
             //change to relative width and height
             const camera = new THREE.OrthographicCamera(-window.innerWidth/2, window.innerWidth/2, window.innerHeight/2, -window.innerHeight/2, -0.5, 0.5);
