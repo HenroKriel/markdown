@@ -617,7 +617,7 @@ T, `R_x`, `R_y`, `R_z` from transformations
         //INCLUDE SHAPE PARAMS
         float dist = /TYPE/(_input).D;
 
-        if(dist < MIN_HIT_DIST) {
+        if(abs(dist) < MIN_HIT_DIST) {
             /SHAPE/_ret.valid = true;
             /SHAPE/_ret.t = total_dist;
             //needs differentiation
