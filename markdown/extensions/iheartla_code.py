@@ -687,15 +687,27 @@ T, `R_x`, `R_y`, `R_z` from transformations
                         param = equation_dict[f'{shape_id}_transform'].trimmed_params[i]
                         param_type = equation_dict[f'{shape_id}_transform'].symtable[equation_dict[f'{shape_id}_transform'].parameters[i]]
 
-                        scene_params += f"{shape_id}_transform_{param}: 0,\n"
-                        if param_type.bounds:
-                            guiadd += f"{shape_id}_transform.add( myObject, '{shape_id}_transform_{param}', {param_type.left_bound}, {param_type.right_bound});\n"
-                        else:
-                            guiadd += f"{shape_id}_transform.add( myObject, '{shape_id}_transform_{param}', -5, 5);\n"
-                        js_uniforms += f"{shape_id}_transform_{param}: {{ value: 0.0 }},\n"
-                        glsl_uniforms += f"uniform float {shape_id}_transform_{param};\n"
-                        scene_animate += f"material.uniforms.{shape_id}_transform_{param}.value = myObject.{shape_id}_transform_{param};\n"
-                        inputs += f"{shape_id}_input.{param} = {shape_id}_transform_{param};\n"
+                        if param_type.var_type == VarTypeEnum.SCALAR:
+                            scene_params += f"{shape_id}_transform_{param}: 0,\n"
+                            if param_type.bounds:
+                                guiadd += f"{shape_id}_transform.add( myObject, '{shape_id}_transform_{param}', {param_type.left_bound}, {param_type.right_bound});\n"
+                            else:
+                                guiadd += f"{shape_id}_transform.add( myObject, '{shape_id}_transform_{param}', -5, 5);\n"
+                            js_uniforms += f"{shape_id}_transform_{param}: {{ value: 0.0 }},\n"
+                            glsl_uniforms += f"uniform float {shape_id}_transform_{param};\n"
+                            scene_animate += f"material.uniforms.{shape_id}_transform_{param}.value = myObject.{shape_id}_transform_{param};\n"
+                            inputs += f"{shape_id}_input.{param} = {shape_id}_transform_{param};\n"
+
+                        if param_type.var_type == VarTypeEnum.VECTOR:
+                            component_list = ', '.join([f'myObject.{shape_id}_transform_{param}_{i}' for i in range(1, param_type.rows+1)])
+                            for i in range(1, param_type.rows+1):
+                                scene_params += f"{shape_id}_transform_{param}_{i}: 0,\n"
+                                guiadd += f"{shape_id}_transform.add( myObject, '{shape_id}_transform_{param}_{i}', -5, 5);\n"
+                            glsl_uniforms += f"uniform vec{param_type.rows} {shape_id}_transform_{param};\n"
+                            js_uniforms += f"{shape_id}_transform_{param}: new THREE.Uniform(new THREE.Vector{param_type.rows}({component_list})),\n"
+                            inputs += f"{shape_id}_input.{param} = {shape_id}_transform_{param};\n"
+                            scene_animate += f"material.uniforms.{shape_id}_transform_{param}.value = new THREE.Vector{param_type.rows}({component_list});\n"
+
                     temp_intersect = temp_intersect.replace("//INCLUDE TRANSFORM PARAMS", inputs)
                     temp_intersect = temp_intersect.replace("/TRANSFORM_INPUT/", f"{shape_id}_input")
 
@@ -708,15 +720,27 @@ T, `R_x`, `R_y`, `R_z` from transformations
                         param = equation_dict[shape['type']].trimmed_params[i]
                         param_type = equation_dict[shape['type']].symtable[equation_dict[shape['type']].parameters[i]]
 
-                        scene_params += f"{shape_id}_shape_{param}: 0,\n"
-                        if param_type.bounds:
-                            guiadd += f"{shape_id}_shape.add( myObject, '{shape_id}_shape_{param}', {param_type.left_bound}, {param_type.right_bound});\n"
-                        else:
-                            guiadd += f"{shape_id}_shape.add( myObject, '{shape_id}_shape_{param}', -5, 5);\n"
-                        js_uniforms += f"{shape_id}_shape_{param}: {{ value: 0.0 }},\n"
-                        glsl_uniforms += f"uniform float {shape_id}_shape_{param};\n"
-                        scene_animate += f"material.uniforms.{shape_id}_shape_{param}.value = myObject.{shape_id}_shape_{param};\n"
-                        inputs += f"_input.{param} = {shape_id}_shape_{param};\n"
+                        if param_type.var_type == VarTypeEnum.SCALAR:
+                            scene_params += f"{shape_id}_shape_{param}: 0,\n"
+                            if param_type.bounds:
+                                guiadd += f"{shape_id}_shape.add( myObject, '{shape_id}_shape_{param}', {param_type.left_bound}, {param_type.right_bound});\n"
+                            else:
+                                guiadd += f"{shape_id}_shape.add( myObject, '{shape_id}_shape_{param}', -5, 5);\n"
+                            js_uniforms += f"{shape_id}_shape_{param}: {{ value: 0.0 }},\n"
+                            glsl_uniforms += f"uniform float {shape_id}_shape_{param};\n"
+                            scene_animate += f"material.uniforms.{shape_id}_shape_{param}.value = myObject.{shape_id}_shape_{param};\n"
+                            inputs += f"_input.{param} = {shape_id}_shape_{param};\n"
+
+                        if param_type.var_type == VarTypeEnum.VECTOR:
+                            component_list = ', '.join([f'myObject.{shape_id}_shape_{param}_{i}' for i in range(1, param_type.rows+1)])
+                            for i in range(1, param_type.rows+1):
+                                scene_params += f"{shape_id}_shape_{param}_{i}: 0,\n"
+                                guiadd += f"{shape_id}_shape.add( myObject, '{shape_id}_shape_{param}_{i}', -5, 5);\n"
+                            glsl_uniforms += f"uniform vec{param_type.rows} {shape_id}_shape_{param};\n"
+                            js_uniforms += f"{shape_id}_shape_{param}: new THREE.Uniform(new THREE.Vector{param_type.rows}({component_list})),\n"
+                            inputs += f"_input.{param} = {shape_id}_shape_{param};\n"
+                            scene_animate += f"material.uniforms.{shape_id}_shape_{param}.value = new THREE.Vector{param_type.rows}({component_list});\n"
+
                     temp_intersect = temp_intersect.replace("//INCLUDE SHAPE PARAMS", inputs)
 
                 #add parameters for material
@@ -757,6 +781,7 @@ T, `R_x`, `R_y`, `R_z` from transformations
                             js_uniforms += f"{shape_id}_material_{param}: new THREE.Uniform(new THREE.Vector{param_type.rows}({component_list})),\n"
                             inputs += f"_input.{param} = {shape_id}_material_{param};\n"
                             scene_animate += f"material.uniforms.{shape_id}_material_{param}.value = new THREE.Vector{param_type.rows}({component_list});\n"
+
                     temp_material = temp_material.replace("//INCLUDE INPUTS", inputs)
                     materials += temp_material
 
