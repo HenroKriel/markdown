@@ -689,7 +689,7 @@ T, `R_x`, `R_y`, `R_z` from transformations
 
                         if param_type.var_type == VarTypeEnum.SCALAR:
                             scene_params += f"{shape_id}_transform_{param}: 0,\n"
-                            if param_type.bounds:
+                            if param_type.has_bounds:
                                 guiadd += f"{shape_id}_transform.add( myObject, '{shape_id}_transform_{param}', {param_type.left_bound}, {param_type.right_bound});\n"
                             else:
                                 guiadd += f"{shape_id}_transform.add( myObject, '{shape_id}_transform_{param}', -5, 5);\n"
@@ -700,9 +700,12 @@ T, `R_x`, `R_y`, `R_z` from transformations
 
                         if param_type.var_type == VarTypeEnum.VECTOR:
                             component_list = ', '.join([f'myObject.{shape_id}_transform_{param}_{i}' for i in range(1, param_type.rows+1)])
-                            for i in range(1, param_type.rows+1):
-                                scene_params += f"{shape_id}_transform_{param}_{i}: 0,\n"
-                                guiadd += f"{shape_id}_transform.add( myObject, '{shape_id}_transform_{param}_{i}', -5, 5);\n"
+                            for i in range(0, param_type.rows):
+                                scene_params += f"{shape_id}_transform_{param}_{i+1}: 0,\n"
+                                if param_type.has_bounds:
+                                    guiadd += f"{shape_id}_transform.add( myObject, '{shape_id}_transform_{param}_{i+1}', {param_type.bounds[i][0]}, {param_type.bounds[i][1]});\n"
+                                else:
+                                    guiadd += f"{shape_id}_transform.add( myObject, '{shape_id}_transform_{param}_{i+1}', -5, 5);\n"
                             glsl_uniforms += f"uniform vec{param_type.rows} {shape_id}_transform_{param};\n"
                             js_uniforms += f"{shape_id}_transform_{param}: new THREE.Uniform(new THREE.Vector{param_type.rows}({component_list})),\n"
                             inputs += f"{shape_id}_input.{param} = {shape_id}_transform_{param};\n"
@@ -722,7 +725,7 @@ T, `R_x`, `R_y`, `R_z` from transformations
 
                         if param_type.var_type == VarTypeEnum.SCALAR:
                             scene_params += f"{shape_id}_shape_{param}: 0,\n"
-                            if param_type.bounds:
+                            if param_type.has_bounds:
                                 guiadd += f"{shape_id}_shape.add( myObject, '{shape_id}_shape_{param}', {param_type.left_bound}, {param_type.right_bound});\n"
                             else:
                                 guiadd += f"{shape_id}_shape.add( myObject, '{shape_id}_shape_{param}', -5, 5);\n"
@@ -733,9 +736,12 @@ T, `R_x`, `R_y`, `R_z` from transformations
 
                         if param_type.var_type == VarTypeEnum.VECTOR:
                             component_list = ', '.join([f'myObject.{shape_id}_shape_{param}_{i}' for i in range(1, param_type.rows+1)])
-                            for i in range(1, param_type.rows+1):
-                                scene_params += f"{shape_id}_shape_{param}_{i}: 0,\n"
-                                guiadd += f"{shape_id}_shape.add( myObject, '{shape_id}_shape_{param}_{i}', -5, 5);\n"
+                            for i in range(0, param_type.rows):
+                                scene_params += f"{shape_id}_shape_{param}_{i+1}: 0,\n"
+                                if param_type.has_bounds:
+                                    guiadd += f"{shape_id}_shape.add( myObject, '{shape_id}_shape_{param}_{i+1}', {param_type.bounds[i][0]}, {param_type.bounds[i][1]});\n"
+                                else:
+                                    guiadd += f"{shape_id}_shape.add( myObject, '{shape_id}_shape_{param}_{i+1}', -5, 5);\n"
                             glsl_uniforms += f"uniform vec{param_type.rows} {shape_id}_shape_{param};\n"
                             js_uniforms += f"{shape_id}_shape_{param}: new THREE.Uniform(new THREE.Vector{param_type.rows}({component_list})),\n"
                             inputs += f"_input.{param} = {shape_id}_shape_{param};\n"
@@ -763,7 +769,7 @@ T, `R_x`, `R_y`, `R_z` from transformations
 
                         if param_type.var_type == VarTypeEnum.SCALAR:
                             scene_params += f"{shape_id}_material_{param}: 0,\n"
-                            if param_type.bounds:
+                            if param_type.has_bounds:
                                 guiadd += f"{shape_id}_material.add( myObject, '{shape_id}_material_{param}', {param_type.left_bound}, {param_type.right_bound});\n"
                             else:
                                 guiadd += f"{shape_id}_material.add( myObject, '{shape_id}_material_{param}', -5, 5);\n"
@@ -774,9 +780,12 @@ T, `R_x`, `R_y`, `R_z` from transformations
 
                         if param_type.var_type == VarTypeEnum.VECTOR:
                             component_list = ', '.join([f'myObject.{shape_id}_material_{param}_{i}' for i in range(1, param_type.rows+1)])
-                            for i in range(1, param_type.rows+1):
-                                scene_params += f"{shape_id}_material_{param}_{i}: 0,\n"
-                                guiadd += f"{shape_id}_material.add( myObject, '{shape_id}_material_{param}_{i}', -5, 5);\n"
+                            for i in range(0, param_type.rows):
+                                scene_params += f"{shape_id}_material_{param}_{i+1}: 0,\n"
+                                if param_type.has_bounds:
+                                    guiadd += f"{shape_id}_material.add( myObject, '{shape_id}_material_{param}_{i+1}', {param_type.bounds[i][0]}, {param_type.bounds[i][1]});\n"
+                                else:
+                                    guiadd += f"{shape_id}_material.add( myObject, '{shape_id}_material_{param}_{i+1}', -5, 5);\n"
                             glsl_uniforms += f"uniform vec{param_type.rows} {shape_id}_material_{param};\n"
                             js_uniforms += f"{shape_id}_material_{param}: new THREE.Uniform(new THREE.Vector{param_type.rows}({component_list})),\n"
                             inputs += f"_input.{param} = {shape_id}_material_{param};\n"
