@@ -38,7 +38,7 @@ void main() {
     vec2 coord = glpos/min(resolution.x, resolution.y);
     gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
     vec3 eye = vec3(0.0, 0.0, -1.0);
-    Ray ray = Ray(eye, vec3(coord, 0.0) - eye);
+    Ray ray = Ray(eye, normalize(vec3(coord, 0.0) - eye));
     Intersection sect = intersect(ray);
     if(sect.valid) {
         vec3 color = vec3(1.0);
