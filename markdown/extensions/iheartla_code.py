@@ -617,16 +617,16 @@ T, `R_x`, `R_y`, `R_z` from transformations
         /TYPE/_input _input;
         _input.p = vec3(sect);
         //INCLUDE SHAPE PARAMS
+        //the SDF
         float dist = /TYPE/(_input).D;
 
         if(abs(dist) < MIN_HIT_DIST) {
             /SHAPE/_ret.valid = true;
             /SHAPE/_ret.t = total_dist;
-            //needs differentiation
-            vec3 norm = grad_/TYPE/(_input);
 
             /SHAPE/_ret.pos = (/SHAPE/_transform(/TRANSFORM_INPUT/).ret*sect).xyz;
-            //precompute inverse function
+
+            vec3 norm = grad_/TYPE/(_input);
             /SHAPE/_ret.norm = (transpose(inverse(mat3(/SHAPE/_transform(/TRANSFORM_INPUT/).ret)))*norm.xyz);
             /SHAPE/_ret.norm = normalize(/SHAPE/_ret.norm);
             
