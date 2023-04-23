@@ -693,7 +693,11 @@ T, `R_x`, `R_y`, `R_z` from transformations
                         if param_type.has_default:
                             scene_params += f"{shape_id}_transform_{param}: {param_type.default},\n"
                         else:
-                            scene_params += f"{shape_id}_transform_{param}: 0,\n"
+                            #set default to average of bounds if they are present
+                            if param_type.has_bounds:
+                                scene_params += f"{shape_id}_transform_{param}: {(param_type.left_bound + param_type.right_bound)/2},\n"
+                            else:
+                                scene_params += f"{shape_id}_transform_{param}: 0,\n"
                         if param_type.has_bounds:
                             guiadd += f"{shape_id}_transform.add( myObject, '{shape_id}_transform_{param}', {param_type.left_bound}, {param_type.right_bound});\n"
                         else:
@@ -709,7 +713,10 @@ T, `R_x`, `R_y`, `R_z` from transformations
                             if param_type.has_default:
                                 scene_params += f"{shape_id}_transform_{param}_{i+1}: {param_type.defaults[i]},\n"
                             else:
-                                scene_params += f"{shape_id}_transform_{param}_{i+1}: 0,\n"
+                                if param_type.has_bounds:
+                                    scene_params += f"{shape_id}_transform_{param}_{i+1}: {(param_type.bounds[i][0] + param_type.bounds[i][1])/2},\n"
+                                else:
+                                    scene_params += f"{shape_id}_transform_{param}_{i+1}: 0,\n"
                             if param_type.has_bounds:
                                 guiadd += f"{shape_id}_transform.add( myObject, '{shape_id}_transform_{param}_{i+1}', {param_type.bounds[i][0]}, {param_type.bounds[i][1]});\n"
                             else:
@@ -735,7 +742,10 @@ T, `R_x`, `R_y`, `R_z` from transformations
                         if param_type.has_default:
                             scene_params += f"{shape_id}_shape_{param}: {param_type.default},\n"
                         else:
-                            scene_params += f"{shape_id}_shape_{param}: 0,\n"
+                            if param_type.has_bounds:
+                                scene_params += f"{shape_id}_shape_{param}: {(param_type.left_bound + param_type.right_bound)/2},\n"
+                            else:
+                                scene_params += f"{shape_id}_shape_{param}: 0,\n"
                         if param_type.has_bounds:
                             guiadd += f"{shape_id}_shape.add( myObject, '{shape_id}_shape_{param}', {param_type.left_bound}, {param_type.right_bound});\n"
                         else:
@@ -751,7 +761,10 @@ T, `R_x`, `R_y`, `R_z` from transformations
                             if param_type.has_default:
                                 scene_params += f"{shape_id}_shape_{param}_{i+1}: {param_type.defaults[i]},\n"
                             else:
-                                scene_params += f"{shape_id}_shape_{param}_{i+1}: 0,\n"
+                                if param_type.has_bounds:
+                                    scene_params += f"{shape_id}_shape_{param}_{i+1}: {(param_type.bounds[i][0] + param_type.bounds[i][1])/2},\n"
+                                else:
+                                    scene_params += f"{shape_id}_shape_{param}_{i+1}: 0,\n"
                             if param_type.has_bounds:
                                 guiadd += f"{shape_id}_shape.add( myObject, '{shape_id}_shape_{param}_{i+1}', {param_type.bounds[i][0]}, {param_type.bounds[i][1]});\n"
                             else:
@@ -785,7 +798,10 @@ T, `R_x`, `R_y`, `R_z` from transformations
                         if param_type.has_default:
                             scene_params += f"{shape_id}_material_{param}: {param_type.default},\n"
                         else:
-                            scene_params += f"{shape_id}_material_{param}: 0,\n"
+                            if param_type.has_bounds:
+                                scene_params += f"{shape_id}_material_{param}: {(param_type.left_bound + param_type.right_bound)/2},\n"
+                            else:
+                                scene_params += f"{shape_id}_material_{param}: 0,\n"
                         if param_type.has_bounds:
                             guiadd += f"{shape_id}_material.add( myObject, '{shape_id}_material_{param}', {param_type.left_bound}, {param_type.right_bound});\n"
                         else:
@@ -801,7 +817,10 @@ T, `R_x`, `R_y`, `R_z` from transformations
                             if param_type.has_default:
                                 scene_params += f"{shape_id}_material_{param}_{i+1}: {param_type.defaults[i]},\n"
                             else:
-                                scene_params += f"{shape_id}_material_{param}_{i+1}: 0,\n"
+                                if param_type.has_bounds:
+                                    scene_params += f"{shape_id}_material_{param}_{i+1}: {(param_type.bounds[i][0] + param_type.bounds[i][1])/2},\n"
+                                else:
+                                    scene_params += f"{shape_id}_material_{param}_{i+1}: 0,\n"
                             if param_type.has_bounds:
                                 guiadd += f"{shape_id}_material.add( myObject, '{shape_id}_material_{param}_{i+1}', {param_type.bounds[i][0]}, {param_type.bounds[i][1]});\n"
                             else:
